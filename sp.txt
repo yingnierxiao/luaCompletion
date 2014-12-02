@@ -21,3 +21,11 @@
 	type 0 : *type
 	protocol 1 : *protocol
 }
+
+
+foobar 1 {
+    request person
+    response {
+        ok 0 : boolean
+    }
+}
