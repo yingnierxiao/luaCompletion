@@ -2,10 +2,26 @@ local lpeg = require 'lpeg'
 
 local DocParser = {}
 
+local function count_lines(_,pos, parser_state)
+  print("line:"..parser_state.line)
+  if parser_state.pos < pos then
+    parser_state.line = parser_state.line + 1
+    parser_state.pos = pos
+
+  end
+  return pos
+end
+
+
+local exception = lpeg.Cmt( lpeg.Carg(1) , function ( _ , pos, parser_state)
+  error(string.format("syntax error at [%s] line (%d)", parser_state.file or "", parser_state.line))
+  return pos
+end)
+
 -- Common Lexical Elements
 local Any             = lpeg.P(1)
-local Newline         = lpeg.P("\n")
-local Whitespace      = lpeg.S(" \t\n")
+local Newline         = lpeg.Cmt((lpeg.P"\n" + "\r\n") * lpeg.Carg(1) ,count_lines)--lpeg.P("\n")
+local Whitespace      = lpeg.S(" \t\n")+Newline
 local OptionalSpace   = Whitespace^0
 local Space           = Whitespace^1
 local Semicolon       = lpeg.P(";")
@@ -144,26 +160,21 @@ function DocParser.new()
   return setmetatable(o, DocParser)
 end
 
-function DocParser:parse(filename, be_verbose)
+function DocParser:parse(filename, iscpp)
   assert(filename)
-  -- assert(is_header(filename) or is_lua_file(filename))
-  
   local file, err = io.open(filename, "r")
   assert(file, err)
   local filecontent = file:read("*a")
-  if be_verbose then
-    print("parsing " .. filename.."  "..string.len(filecontent))
-  end
-  -- if is_header(filename) then
+  local state = { file = filename, pos = 0, line = 1 }
+  if iscpp then
   --   if is_lua then
   --     return lpeg.match(self.lua_c_pattern, filecontent)
   --   else
-      return lpeg.match(FunctionTypedef, filecontent)
+      return lpeg.match(self.c_pattern+exception, filecontent,1,state)
   --   end
-  -- else
-  --   assert(is_lua_file(filename))
-  --   return lpeg.match(self.lua_pattern, filecontent)
-  -- end
+  else
+    return lpeg.match(self.lua_pattern+exception, filecontent,1,state)
+  end
 end
 
 local print = print
@@ -172,6 +183,10 @@ local tinsert = table.insert
 local srep = string.rep
 
 local trace =function (root)
+    if root ==nil then
+        print("...")
+        return
+    end
     local cache = {  [root] = "." }
     local function _dump(t,space,name)
         local temp = {}
@@ -192,6 +207,9 @@ local trace =function (root)
     print(_dump(root, "",""))
 end
 local parse = DocParser.new()
-local data = parse:parse("luawx.tolua",true)
+local data = parse:parse("gen.lua",false)
+
+-- local data = parse:parse("dfont.h",true)
+
 
 trace(data)
