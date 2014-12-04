@@ -1,5 +1,5 @@
 local lpeg = require "lpeg"
-local trace = require("trace2")
+local trace = require("trace")
 
 local P = lpeg.P    --Matches string literally
 local S = lpeg.S 	--Matches any character in string (Set)
@@ -34,8 +34,6 @@ local alpha = R"az" + R"AZ" + "_"
 local alnum = alpha + R"09"
 local word = alpha * alnum ^ 0  --可以有0个以上数字
 local name = C(word)			--捕获单词
-local typename = C(word * ("." * word) ^ 0)	--   单词  或点开头0个以上的
-local tag = R"09" ^ 1 / tonumber  --捕获标签  转化为数字
 
 
 local function multipat(pat)
