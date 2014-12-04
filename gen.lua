@@ -20,14 +20,16 @@ local function count_lines(_,pos, parser_state)
 end
 
 local exception = lpeg.Cmt( lpeg.Carg(1) , function ( _ , pos, parser_state)
-	error(string.format("syntax error at [%s] line (%d)", parser_state.file or "", parser_state.line))
+	error(string.format("syntax error at [%s] line (%d) pos %d", parser_state.file or "", parser_state.line,pos))
 	return pos
 end)
 
 local eof = P(-1)				--结束
 local newline = lpeg.Cmt((P"\n" + "\r\n") * lpeg.Carg(1) ,count_lines)
 local line_comment = "//" * (1 - newline) ^0 * (newline + eof)
-local blank = S" \t" + newline + line_comment
+local include_comment = "#" * (1 - newline) ^0 * (newline + eof)
+
+local blank = S" \t" + newline + line_comment + include_comment
 local blank0 = blank ^ 0
 local blanks = blank ^ 1
 local alpha = R"az" + R"AZ" + "_"
@@ -35,6 +37,8 @@ local alnum = alpha + R"09"
 local word = alpha * alnum ^ 0  --可以有0个以上数字
 local name = C(word)			--捕获单词
 
+local symbol = S"*&~"
+local const = P("const")
 
 local function multipat(pat)
 	return Ct(blank0 * (pat * blanks) ^ 0 * pat^0 * blank0)
@@ -47,9 +51,17 @@ end
 
 local typedef = P{
 	"ALL",
-	ENUM_FIELD=namedpat("ENUM_FIELD",name*blank0*(P",")^0),
+	ENUM_FIELD=namedpat("enum_field",name*blank0*(P",")^0),
 	ENUM_STRUCT = namedpat("enum",P"enum"*blank0*P(name)^0*blank0*P"{"*blank0*multipat(V"ENUM_FIELD")*blank0*P"}"*blank0*P";"),
-	ALL = multipat(V"ENUM_STRUCT"),
+	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*P"{"*blank0*multipat(V"S_FUN_FIELD"+V"FUN_FIELD"+V"CONST_FUN_FIELD"+V"DCONST_FUN_FIELD")*blank0*"}"*blank0*P";"),
+	-- PUBLIC_STRUCT="",
+	CONST_FUN_FIELD=namedpat("cfun",name*blanks*V"PARAM_STRUCT"),
+	DCONST_FUN_FIELD=namedpat("dfun",symbol*name*blanks*V"PARAM_STRUCT"),
+	S_FUN_FIELD=namedpat("sfun",P"static"*blanks*name*blanks*name*V"PARAM_STRUCT"),
+	FUN_FIELD=namedpat("fun",name*blanks*name*V"PARAM_STRUCT"),
+	PARAM_FIELD=namedpat("param",const^0*blanks*name*blank0*symbol*blank0*name*P("=")^0*name^0*(P",")^0),
+	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD")^0*blank0*P")"*blank0*P";"),
+	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"),
 }
 
 local luafile = io.open("gen.h", "r")
