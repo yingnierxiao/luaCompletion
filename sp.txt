@@ -1,11 +1,11 @@
 .type {
-	.field {
-		name 0 : string
+	.field {						#TYPE  #STRUCT start
+		name 0 : string   			#FIELD
 		buildin	1 :	integer
 		type 2 : integer
 		tag	3 :	integer
 		array 4	: boolean
-	}
+	}								#STRUCT end
 	name 0 : string
 	fields 1 : *field
 }
@@ -13,19 +13,19 @@
 .protocol {
 	name 0 : string
 	tag	1 :	integer
-	request	2 :	integer	# index
-	response 3 : integer # index
+	request	2 :	integer	# index		#SUBPROTO
+	response 3 : integer # index	#SUBPROTO
 }
 
 .group {
 	type 0 : *type
-	protocol 1 : *protocol
+	protocol 1 : *protocol			#PROTOCOL
 }
 
 
 foobar 1 {
     request person
-    response {
+    response { 						
         ok 0 : boolean
     }
 }

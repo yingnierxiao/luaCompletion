@@ -1,84 +1,67 @@
-local lpeg = require 'lpeg'
+local lpeg = require "lpeg"
+local trace = require("trace2")
 
-local P = lpeg.P
-local C = lpeg.C
-local Ct = lpeg.Ct
-
-local luafile = io.open("gen.lua", "r")
-
-local filecontent = luafile:read("*a")
-
-local Any             = lpeg.P(1)
-local Newline         = lpeg.P("\n")
-local Whitespace      = lpeg.S(" \t\n")
-local OptionalSpace   = Whitespace^0
-local Space           = Whitespace^1
-local Semicolon       = lpeg.P(";")
-local DefineSeparator = lpeg.P("\\")
-
--- c enum
-local braceStart = P("{")
-local braceEnd = P("}")
-
-local enumStart = P("enum")
-
-local splitEnum = P(",")+Newline
+local P = lpeg.P    --Matches string literally
+local S = lpeg.S 	--Matches any character in string (Set)
+local R = lpeg.R 	--Matches any character between x and y (Range)
+local C = lpeg.C 	--the match for patt plus all captures made by patt
+local Ct = lpeg.Ct 	--a table with all captures from patt
+local Cg = lpeg.Cg 	--the values produced by patt, optionally tagged with name
+local Cc = lpeg.Cc 	--the given values (matches the empty string)
+local V = lpeg.V 	--代替传入名称的变量
 
 
-local split = function (s, sep)
-  sep = P(sep)
-  local st = C(enumStart+braceStart+Newline)
-  local e = C(Newline+braceEnd)
-  local elem = C((1 - sep)^0)
-  local p = st+(elem * (sep * elem)^0)
-  return lpeg.match(p, s)
+local function count_lines(_,pos, parser_state)
+	if parser_state.pos < pos then
+		parser_state.line = parser_state.line + 1
+		parser_state.pos = pos
+	end
+	return pos
 end
 
-local test1str = [[
+local exception = lpeg.Cmt( lpeg.Carg(1) , function ( _ , pos, parser_state)
+	error(string.format("syntax error at [%s] line (%d)", parser_state.file or "", parser_state.line))
+	return pos
+end)
 
-enum 
-{ 
-wxUNKNOWN_PLATFORM, 
-wxCURSES, 
-wxXVIEW_X, 
-wxMOTIF_X, 
-wxCOSE_X, 
-wxNEXTSTEP, 
-wxMAC, 
-wxMAC_DARWIN, 
-wxBEOS, 
-wxGTK, 
-wxGTK_WIN32, 
-wxGTK_OS2, 
-wxGTK_BEOS, 
-wxGEOS, 
-wxOS2_PM, 
-wxWINDOWS, 
-wxMICROWINDOWS, 
-wxPENWINDOWS, 
-wxWINDOWS_NT, 
-wxWIN32S, 
-wxWIN95, 
-wxWIN386, 
-wxWINDOWS_CE, 
-wxWINDOWS_POCKETPC, 
-wxWINDOWS_SMARTPHONE, 
-wxMGL_UNIX, 
-wxMGL_X, 
-wxMGL_WIN32, 
-wxMGL_OS2, 
-wxMGL_DOS, 
-wxWINDOWS_OS2, 
-wxUNIX, 
-wxX11, 
-wxPALMOS, 
-wxDOS 
-}; 
+local eof = P(-1)				--结束
+local newline = lpeg.Cmt((P"\n" + "\r\n") * lpeg.Carg(1) ,count_lines)
+local line_comment = "//" * (1 - newline) ^0 * (newline + eof)
+local blank = S" \t" + newline + line_comment
+local blank0 = blank ^ 0
+local blanks = blank ^ 1
+local alpha = R"az" + R"AZ" + "_"
+local alnum = alpha + R"09"
+local word = alpha * alnum ^ 0  --可以有0个以上数字
+local name = C(word)			--捕获单词
+local typename = C(word * ("." * word) ^ 0)	--   单词  或点开头0个以上的
+local tag = R"09" ^ 1 / tonumber  --捕获标签  转化为数字
 
-]]
 
-print(split(test1str,splitEnum))
--- print(lpeg.match(C(enumStart*Newline*braceStart),test1str))
+local function multipat(pat)
+	return Ct(blank0 * (pat * blanks) ^ 0 * pat^0 * blank0)
+end
+
+local function namedpat(name, pat)
+	return Ct(Cg(Cc(name), "type") * Cg(pat))
+end
+
+
+local typedef = P{
+	"ALL",
+	ENUM_FIELD=namedpat("ENUM_FIELD",name*blank0*(P",")^0),
+	ENUM_STRUCT = namedpat("enum",P"enum"*blank0*P(name)^0*blank0*P"{"*blank0*multipat(V"ENUM_FIELD")*blank0*P"}"*blank0*P";"),
+	ALL = multipat(V"ENUM_STRUCT"),
+}
+
+local luafile = io.open("gen.h", "r")
+local filecontent = luafile:read("*a")
+
+local proto = blank0 * typedef * blank0
+local state = { file = nil, pos = 0, line = 1 }
+local r = lpeg.match(proto * -1 + exception , filecontent , 1, state )
+
+trace(r)
 
 
 
