@@ -27,15 +27,17 @@ end)
 local eof = P(-1)				--结束
 local newline = lpeg.Cmt((P"\n" + "\r\n") * lpeg.Carg(1) ,count_lines)
 local line_comment = "//" * (1 - newline) ^0 * (newline + eof)
-local include_comment = "#" * (1 - newline) ^0 * (newline + eof)
+local include_comment = "$" * (1 - newline) ^0 * (newline + eof)
+local include_comment2 = "#include" * (1 - newline) ^0 * (newline + eof)
 
-local blank = S" \t" + newline + line_comment + include_comment
+local blank = S" \t" + newline + line_comment + include_comment+ include_comment2
 local blank0 = blank ^ 0
 local blanks = blank ^ 1
-local alpha = R"az" + R"AZ" + "_"
+local alpha = R"az" + R"AZ" + "_"+"::"
 local alnum = alpha + R"09"
 local word = alpha * alnum ^ 0  --可以有0个以上数字
 local name = C(word)			--捕获单词
+local defaultValue = name+C(R"09")
 
 local symbol = S"*&~"
 local const = P("const")
@@ -51,27 +53,30 @@ end
 
 local typedef = P{
 	"ALL",
+	DEFAULT_STRUCT=namedpat("define",(P"#define"* blanks*name*blanks*defaultValue)),
 	ENUM_FIELD=namedpat("enum_field",name*blank0*(P",")^0),
 	ENUM_STRUCT = namedpat("enum",P"enum"*blank0*P(name)^0*blank0*P"{"*blank0*multipat(V"ENUM_FIELD")*blank0*P"}"*blank0*P";"),
-	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*P"{"*blank0*multipat(V"S_FUN_FIELD"+V"FUN_FIELD"+V"CONST_FUN_FIELD"+V"DCONST_FUN_FIELD")*blank0*"}"*blank0*P";"),
-	-- PUBLIC_STRUCT="",
-	CONST_FUN_FIELD=namedpat("cfun",name*blanks*V"PARAM_STRUCT"),
-	DCONST_FUN_FIELD=namedpat("dfun",symbol*name*blanks*V"PARAM_STRUCT"),
-	S_FUN_FIELD=namedpat("sfun",P"static"*blanks*name*blanks*name*V"PARAM_STRUCT"),
-	FUN_FIELD=namedpat("fun",name*blanks*name*V"PARAM_STRUCT"),
-	PARAM_FIELD=namedpat("param",const^0*blanks*name*blank0*symbol*blank0*name*P("=")^0*name^0*(P",")^0),
-	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD")^0*blank0*P")"*blank0*P";"),
-	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"),
+	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*(P":"*blank0*P("public")*blanks*name*blank0)^0*P"{"*V("CLASS_BODY")*"}"*blank0*P";"),
+	CLASS_BODY=blank0*multipat(V"PUBLIC_STRUCT"+V"FUN_FIELD"+V"S_FUN_FIELD"+V"CONST_FUN_FIELD"+V"DCONST_FUN_FIELD")*blank0,
+	PUBLIC_STRUCT=name*blank0*P":",
+	CONST_FUN_FIELD=namedpat("cfun",name*blank0*V"PARAM_STRUCT"),
+	DCONST_FUN_FIELD=namedpat("dfun",symbol*blank0*name*blank0*V"PARAM_STRUCT"),
+	S_FUN_FIELD=namedpat("sfun",P"static"*blanks*V"FUN_FIELD"),
+	FUN_FIELD=namedpat("fun",P("virtual")^0*blanks^0*name*blank0*symbol^0*blank0*name*blank0*(P"@"*blank0*name*blank0)^0*V"PARAM_STRUCT"),
+	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blanks*defaultValue)^0*P","^0),
+	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD"+P"void")*blank0*P")"*blank0*const^0*blank0*(P";"+P"{}")),
+	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"+V"DEFAULT_STRUCT"),
 }
 
-local luafile = io.open("gen.h", "r")
+-- local luafile = io.open("gen.h", "r")
+local luafile = io.open("cocos2dx_ext_luabinding.tolua", "r")
 local filecontent = luafile:read("*a")
 
 local proto = blank0 * typedef * blank0
 local state = { file = nil, pos = 0, line = 1 }
 local r = lpeg.match(proto * -1 + exception , filecontent , 1, state )
 
-trace(r)
+trace(r,"",10)
 
 
 

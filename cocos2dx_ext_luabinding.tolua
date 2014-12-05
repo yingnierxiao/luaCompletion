@@ -1,0 +1,200 @@
+$#include "../crypto/CCCrypto.h"
+$#include "../network/CCNetwork.h"
+$#include "../network/HttpLoader.h"
+$#include "../network/CCHTTPRequest.h"
+$#include "../SuperAnim/SuperAnimNodeV2.h"
+//$#include "../net/defines.h"
+$#include "../net/ClientNet.h"
+$#include "../net/BuffPacket.h"
+$#include "../net/ClientManager.h"
+
+$using namespace std;
+$using namespace cocos2d;
+$using namespace cocos2d::extra;
+$using namespace SuperAnim;
+
+class CCCrypto
+{
+public:
+    static LUA_STRING encryptXXTEALua @ encryptXXTEA (const char* plaintext,
+                                      int plaintextLength,
+                                      const char* key,
+                                      int keyLength);
+
+    static LUA_STRING decryptXXTEALua @ decryptXXTEA (const char* ciphertext,
+                                      int ciphertextLength,
+                                      const char* key,
+                                      int keyLength);
+
+    static LUA_STRING encodeBase64Lua @ encodeBase64 (const char* input, int inputLength);
+    static LUA_STRING decodeBase64Lua @ decodeBase64 (const char* input);
+
+    static LUA_STRING MD5Lua @ MD5 (char* input, bool isRawOutput);
+
+    static LUA_STRING MD5FileLua @ MD5File(const char* path);
+};
+
+
+#define kCCHTTPRequestMethodGET  0
+#define kCCHTTPRequestMethodPOST 1
+
+#define kCCHTTPRequestAcceptEncodingIdentity 0
+#define kCCHTTPRequestAcceptEncodingGzip     1
+#define kCCHTTPRequestAcceptEncodingDeflate  2
+
+#define kCCHTTPRequestStateIdle       0
+#define kCCHTTPRequestStateInProgress 1
+#define kCCHTTPRequestStateCompleted  2
+#define kCCHTTPRequestStateCancelled  3
+#define kCCHTTPRequestStateCleared    4
+class CCHTTPRequest : public CCObject
+{
+    static CCHTTPRequest* createWithUrlLua @ createWithUrl (LUA_FUNCTION listener,
+                                           const char* url,
+                                           int method = kCCHTTPRequestMethodGET,
+                                           bool isOpenssl = false);
+    void setRequestUrl(const char* url);
+    void addRequestHeader(const char* header);
+    void addPOSTValue(const char* key, const char* value);
+    void setPOSTData(const char* data);
+    void setAcceptEncoding(int acceptEncoding);
+    void setTimeout(int timeout);
+    void start(void);
+    void cancel(void);
+    int getState(void);
+    int getResponseStatusCode(void);
+    string getResponseString(void);
+    LUA_STRING getResponseDataLua @ getResponseData (void);
+    int getResponseDataLength(void);
+    int saveResponseData(const char* filename);
+    int getErrorCode(void);
+    string getErrorMessage(void);
+};
+
+#define kCCNetworkStatusNotReachable     0
+#define kCCNetworkStatusReachableViaWiFi 1
+#define kCCNetworkStatusReachableViaWWAN 2
+
+class CCNetwork
+{
+    static bool isLocalWiFiAvailable(void);
+    static bool isInternetConnectionAvailable(void);
+    static bool isHostNameReachable(const char* hostName);
+    static int getInternetConnectionStatus(void); 
+};
+
+class SuperAnimNodeListener
+{
+public:
+    virtual void OnAnimSectionEnd(int theId, std::string theLabelName){}
+};
+class SuperAnimNode : public CCSprite
+{
+
+public:
+    SuperAnimNode();
+    ~SuperAnimNode();
+    static SuperAnimNode *create(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener=NULL);
+
+    bool Init(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener);
+    void draw();
+    void update(float dt);
+    void setFlipX(bool isFlip);
+    void setFlipY(bool isFlip);
+
+    bool PlaySection(std::string theLabel);
+    float GetSectionTime(std::string theLabel);
+    void Pause();
+    void Resume();
+    bool IsPause();
+    bool IsPlaying();
+    int GetCurFrame();
+    std::string GetCurSectionName();
+    bool HasSection(std::string theLabelName);
+
+};
+class BuffPacket
+{
+public:
+    static  BuffPacket* CreateFromFile(string path);
+
+
+    BuffPacket();
+    ~BuffPacket();
+    unsigned char   ReadUInt8();
+    unsigned short  ReadUInt16();
+    unsigned int  ReadUInt32();
+    unsigned long long  ReadUInt64();
+    signed char    ReadInt8();
+    short   ReadInt16();
+    int   ReadInt32();
+
+    float32 ReadFloat32();
+    float64 ReadFloat64();
+    string  ReadString();
+    
+
+    void    WriteUInt8(unsigned char u1Data);
+    void    WriteUInt16(unsigned short u2Data);
+    void    WriteUInt32(unsigned int u4Data);
+    void    WriteUInt64(unsigned long long u8Data);
+    void    WriteFloat32(float32 f4Data);
+    void    WriteFloat64(float64 f8Data);
+    void    WriteString(string str);
+ 
+    unsigned short  GetPacketID();
+    void SetPacketID(unsigned short id);
+    int SendData(int serverID=0);
+};
+
+class ClientNet
+{
+public:
+    bool ConnectServer(const char* ip,unsigned short port);
+    bool ReconnectServer();
+    bool Stop();
+    
+    void registerScriptHandler(LUA_FUNCTION nHandler);
+    void unregisterScriptHandler(void);
+
+    void registerDisconnectionHandler(LUA_FUNCTION nHandler);
+    void unregisterDisconnectionHandler(void);
+
+    void registerReconnectionHandler(LUA_FUNCTION nHandler);
+    void unregisterReconnectionHandler(void);
+
+    void ConnectionClose();
+};
+
+class ClientManager {
+    ClientManager();
+    ~ClientManager();
+    
+    static ClientManager* shared();
+    
+    ClientNet * create(int serverid=0);
+    
+    ClientNet * getClient(int serverid=0);
+    
+    void addClient(int serverid,ClientNet* client);
+    
+    void removeClient(int serverid);
+    
+    void stopAll();
+    
+    void ReconnectServerAll();
+    
+    
+};
+
+
+class HttpLoader:public CCObject
+{
+public:
+    static HttpLoader* Instance();
+    void DownLoadFile(string sUrl,string sSavePath,string sSaveFileName,fpDownLoadCallback onDownLoadCallback,int haveDownLoadSize = 0,LUA_FUNCTION scriptHandler);
+    void DownLoadFile(string sUrl,string sSavePath,string sSaveFileName,int haveDownLoadSize = 0,LUA_FUNCTION scriptHandler);
+};
+
+
+

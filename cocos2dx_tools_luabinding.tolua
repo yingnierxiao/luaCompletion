@@ -1,0 +1,841 @@
+$#include "../Utils/Loger.h"
+$#include "../Utils/Utils.h"
+$#include "../Utils/CSVParse.h"
+$#include "../net/BuffPacket.h"
+$#include "LuaCocos2d.h"
+
+$using namespace tinyxml2;
+$using namespace cocos2d;
+
+class Loger
+{
+	Loger(void);
+    ~Loger(void);
+
+    static void WriteLog(const char* log);
+    
+    static void ErrorLog(const char* log);
+};
+
+class Utils
+{
+	Utils(void);
+	~Utils(void);
+
+	static string ReadFile(string path,string mode);
+    
+	static void WriteFile(string path,string content);
+    
+    static string GetRootPath();
+    
+	static bool IsFileExit(string path);
+    
+	static void Debug(string info);
+	
+	static CCSprite * createMaskedSprite(CCSprite *src,const char *maskFile,int maskX=0,int maskY=0);
+
+	static XMLDocument * crateXML(const char *xmlFilePath);
+
+    static CCRenderTexture* createStroke(CCLabelTTF* label, float size ,ccColor3B cor);
+
+    static string GetRootPath();
+
+    static string subString(string str,int len);
+};
+
+class CSVParse 
+{
+    CSVParse(void);
+
+    ~CSVParse();
+
+    bool openFile(const char* fileName);
+    
+    char*   getData(int rows,int cols);
+    
+    string findRowData(const char* value,int row);
+
+    int     getCols();
+    
+    int     getRows();
+};
+
+
+class XMLNode
+{
+public:
+
+   
+    /// Get the XMLDocument that owns this XMLNode.
+    XMLDocument* GetDocument()				{
+        return _document;
+    }
+
+    /// Safely cast to an Element, or null.
+     XMLElement*		ToElement()		{
+        return 0;
+    }
+    /// Safely cast to Text, or null.
+     XMLText*		ToText()		{
+        return 0;
+    }
+    /// Safely cast to a Comment, or null.
+     XMLComment*		ToComment()		{
+        return 0;
+    }
+    /// Safely cast to a Document, or null.
+     XMLDocument*	ToDocument()	{
+        return 0;
+    }
+    /// Safely cast to a Declaration, or null.
+     XMLDeclaration*	ToDeclaration()	{
+        return 0;
+    }
+    /// Safely cast to an Unknown, or null.
+     XMLUnknown*		ToUnknown()		{
+        return 0;
+    }
+
+     const XMLElement*		ToElement() const		{
+        return 0;
+    }
+     const XMLText*			ToText() const			{
+        return 0;
+    }
+     const XMLComment*		ToComment() const		{
+        return 0;
+    }
+     const XMLDocument*		ToDocument() const		{
+        return 0;
+    }
+     const XMLDeclaration*	ToDeclaration() const	{
+        return 0;
+    }
+     const XMLUnknown*		ToUnknown() const		{
+        return 0;
+    }
+
+    /** The meaning of 'value' changes for the specific type.
+    	@verbatim
+    	Document:	empty
+    	Element:	name of the element
+    	Comment:	the comment text
+    	Unknown:	the tag contents
+    	Text:		the text string
+    	@endverbatim
+    */
+    const char* Value() const			{
+        return _value.GetStr();
+    }
+
+    /** Set the Value of an XML node.
+    	@sa Value()
+    */
+    void SetValue( const char* val, bool staticMem=false );
+
+    /// Get the parent of this node on the DOM.
+    const XMLNode*	Parent() const			{
+        return _parent;
+    }
+
+    XMLNode* Parent()						{
+        return _parent;
+    }
+
+    /// Returns true if this node has no children.
+    bool NoChildren() const					{
+        return !_firstChild;
+    }
+
+
+    XMLNode*		FirstChild()			{
+        return _firstChild;
+    }
+
+
+    XMLElement* FirstChildElement( const char* value=0 )	{
+        return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->FirstChildElement( value ));
+    }
+
+   
+    XMLNode*		LastChild()								{
+        return const_cast<XMLNode*>(const_cast<const XMLNode*>(this)->LastChild() );
+    }
+
+  
+    XMLElement* LastChildElement( const char* value=0 )	{
+        return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->LastChildElement(value) );
+    }
+
+  
+
+    XMLNode*	PreviousSibling()							{
+        return _prev;
+    }
+
+
+    XMLElement*	PreviousSiblingElement( const char* value=0 ) {
+        return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->PreviousSiblingElement( value ) );
+    }
+
+  
+    XMLNode*	NextSibling()								{
+        return _next;
+    }
+
+  
+    XMLElement*	NextSiblingElement( const char* value=0 )	{
+        return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->NextSiblingElement( value ) );
+    }
+
+    /**
+    	Add a child node as the last (right) child.
+    */
+    XMLNode* InsertEndChild( XMLNode* addThis );
+
+    XMLNode* LinkEndChild( XMLNode* addThis )	{
+        return InsertEndChild( addThis );
+    }
+    /**
+    	Add a child node as the first (left) child.
+    */
+    XMLNode* InsertFirstChild( XMLNode* addThis );
+    /**
+    	Add a node after the specified child node.
+    */
+    XMLNode* InsertAfterChild( XMLNode* afterThis, XMLNode* addThis );
+
+    /**
+    	Delete all the children of this node.
+    */
+    void DeleteChildren();
+
+    /**
+    	Delete a child of this node.
+    */
+    void DeleteChild( XMLNode* node );
+
+    /**
+    	Make a copy of this node, but not its children.
+    	You may pass in a Document pointer that will be
+    	the owner of the new Node. If the 'document' is
+    	null, then the node returned will be allocated
+    	from the current Document. (this->GetDocument())
+
+    	Note: if called on a XMLDocument, this will return null.
+    */
+     XMLNode* ShallowClone( XMLDocument* document ) const = 0;
+
+    /**
+    	Test if 2 nodes are the same, but don't test children.
+    	The 2 nodes do not need to be in the same Document.
+
+    	Note: if called on a XMLDocument, this will return false.
+    */
+     bool ShallowEqual( const XMLNode* compare ) const = 0;
+
+    /** Accept a hierarchical visit of the nodes in the TinyXML DOM. Every node in the
+    	XML tree will be conditionally visited and the host will be called back
+    	via the TiXmlVisitor interface.
+
+    	This is essentially a SAX interface for TinyXML. (Note however it doesn't re-parse
+    	the XML for the callbacks, so the performance of TinyXML is unchanged by using this
+    	interface versus any other.)
+
+    	The interface has been based on ideas from:
+
+    	- http://www.saxproject.org/
+    	- http://c2.com/cgi/wiki?HierarchicalVisitorPattern
+
+    	Which are both good references for "visiting".
+
+    	An example of using Accept():
+    	@verbatim
+    	TiXmlPrinter printer;
+    	tinyxmlDoc.Accept( &printer );
+    	const char* xmlcstr = printer.CStr();
+    	@endverbatim
+    */
+     bool Accept( XMLVisitor* visitor ) const = 0;
+
+    // internal
+     char* ParseDeep( char*, StrPair* );
+};
+
+
+class XMLText : public XMLNode
+{
+public:
+     bool Accept( XMLVisitor* visitor ) const;
+
+     XMLText* ToText()			{
+        return this;
+    }
+     const XMLText* ToText() const	{
+        return this;
+    }
+
+    /// Declare whether this should be CDATA or standard text.
+    void SetCData( bool isCData )			{
+        _isCData = isCData;
+    }
+    /// Returns true if this is a CDATA text element.
+    bool CData() const						{
+        return _isCData;
+    }
+
+    char* ParseDeep( char*, StrPair* endTag );
+     XMLNode* ShallowClone( XMLDocument* document ) const;
+     bool ShallowEqual( const XMLNode* compare ) const;
+};
+
+
+/** An XML Comment. */
+class XMLComment : public XMLNode
+{
+public:
+     XMLComment*	ToComment()					{
+        return this;
+    }
+    
+     bool Accept( XMLVisitor* visitor ) const;
+
+    char* ParseDeep( char*, StrPair* endTag );
+     XMLNode* ShallowClone( XMLDocument* document ) const;
+     bool ShallowEqual( const XMLNode* compare ) const;
+
+};
+
+
+
+/** An attribute is a name-value pair. Elements have an arbitrary
+	number of attributes, each with a unique name.
+
+	@note The attributes are not XMLNodes. You may only query the
+	Next() attribute in a list.
+*/
+class XMLAttribute
+{
+public:
+    /// The name of the attribute.
+    const char* Name() const {
+        return _name.GetStr();
+    }
+    /// The value of the attribute.
+    const char* Value() const {
+        return _value.GetStr();
+    }
+    /// The next attribute in the list.
+    const XMLAttribute* Next() const {
+        return _next;
+    }
+
+    /** IntAttribute interprets the attribute as an integer, and returns the value.
+        If the value isn't an integer, 0 will be returned. There is no error checking;
+    	use QueryIntAttribute() if you need error checking.
+    */
+    int		 IntValue() const				{
+        int i=0;
+        QueryIntValue( &i );
+        return i;
+    }
+    /// Query as an unsigned integer. See IntAttribute()
+    unsigned UnsignedValue() const			{
+        unsigned i=0;
+        QueryUnsignedValue( &i );
+        return i;
+    }
+    /// Query as a boolean. See IntAttribute()
+    bool	 BoolValue() const				{
+        bool b=false;
+        QueryBoolValue( &b );
+        return b;
+    }
+    /// Query as a double. See IntAttribute()
+    double 	 DoubleValue() const			{
+        double d=0;
+        QueryDoubleValue( &d );
+        return d;
+    }
+    /// Query as a float. See IntAttribute()
+    float	 FloatValue() const				{
+        float f=0;
+        QueryFloatValue( &f );
+        return f;
+    }
+
+    /** QueryIntAttribute interprets the attribute as an integer, and returns the value
+    	in the provided paremeter. The function will return XML_NO_ERROR on success,
+    	and XML_WRONG_ATTRIBUTE_TYPE if the conversion is not successful.
+    */
+    XMLError QueryIntValue( int* value ) const;
+    /// See QueryIntAttribute
+    XMLError QueryUnsignedValue( unsigned int* value ) const;
+    /// See QueryIntAttribute
+    XMLError QueryBoolValue( bool* value ) const;
+    /// See QueryIntAttribute
+    XMLError QueryDoubleValue( double* value ) const;
+    /// See QueryIntAttribute
+    XMLError QueryFloatValue( float* value ) const;
+
+    /// Set the attribute to a string value.
+    void SetAttribute( const char* value );
+    /// Set the attribute to value.
+    void SetAttribute( int value );
+    /// Set the attribute to value.
+    void SetAttribute( unsigned value );
+    /// Set the attribute to value.
+    void SetAttribute( bool value );
+    /// Set the attribute to value.
+    void SetAttribute( double value );
+    /// Set the attribute to value.
+    void SetAttribute( float value );
+
+};
+
+
+/** The element is a container class. It has a value, the element name,
+	and can contain other elements, text, comments, and unknowns.
+	Elements also contain an arbitrary number of attributes.
+*/
+class XMLElement : public XMLNode
+{
+public:
+    /// Get the name of an element (which is the Value() of the node.)
+    const char* Name() const		{
+        return Value();
+    }
+    /// Set the name of the element.
+    void SetName( const char* str, bool staticMem=false )	{
+        SetValue( str, staticMem );
+    }
+
+     XMLElement* ToElement()				{
+        return this;
+    }
+   
+     bool Accept( XMLVisitor* visitor ) const;
+
+    /** Given an attribute name, Attribute() returns the value
+    	for the attribute of that name, or null if none
+    	exists. For example:
+
+    	@verbatim
+    	const char* value = ele->Attribute( "foo" );
+    	@endverbatim
+
+    	The 'value' parameter is normally null. However, if specified,
+    	the attribute will only be returned if the 'name' and 'value'
+    	match. This allow you to write code:
+
+    	@verbatim
+    	if ( ele->Attribute( "foo", "bar" ) ) callFooIsBar();
+    	@endverbatim
+
+    	rather than:
+    	@verbatim
+    	if ( ele->Attribute( "foo" ) ) {
+    		if ( strcmp( ele->Attribute( "foo" ), "bar" ) == 0 ) callFooIsBar();
+    	}
+    	@endverbatim
+    */
+    const char* Attribute( const char* name, const char* value=0 ) const;
+
+    /** Given an attribute name, IntAttribute() returns the value
+    	of the attribute interpreted as an integer. 0 will be
+    	returned if there is an error. For a method with error
+    	checking, see QueryIntAttribute()
+    */
+    int		 IntAttribute( const char* name ) const		{
+        int i=0;
+        QueryIntAttribute( name, &i );
+        return i;
+    }
+    /// See IntAttribute()
+    unsigned UnsignedAttribute( const char* name ) const {
+        unsigned i=0;
+        QueryUnsignedAttribute( name, &i );
+        return i;
+    }
+    /// See IntAttribute()
+    bool	 BoolAttribute( const char* name ) const	{
+        bool b=false;
+        QueryBoolAttribute( name, &b );
+        return b;
+    }
+    /// See IntAttribute()
+    double 	 DoubleAttribute( const char* name ) const	{
+        double d=0;
+        QueryDoubleAttribute( name, &d );
+        return d;
+    }
+    /// See IntAttribute()
+    float	 FloatAttribute( const char* name ) const	{
+        float f=0;
+        QueryFloatAttribute( name, &f );
+        return f;
+    }
+
+    /** Given an attribute name, QueryIntAttribute() returns
+    	XML_NO_ERROR, XML_WRONG_ATTRIBUTE_TYPE if the conversion
+    	can't be performed, or XML_NO_ATTRIBUTE if the attribute
+    	doesn't exist. If successful, the result of the conversion
+    	will be written to 'value'. If not successful, nothing will
+    	be written to 'value'. This allows you to provide default
+    	value:
+
+    	@verbatim
+    	int value = 10;
+    	QueryIntAttribute( "foo", &value );		// if "foo" isn't found, value will still be 10
+    	@endverbatim
+    */
+    XMLError QueryIntAttribute( const char* name, int* value ) const				{
+        const XMLAttribute* a = FindAttribute( name );
+        if ( !a ) {
+            return XML_NO_ATTRIBUTE;
+        }
+        return a->QueryIntValue( value );
+    }
+    /// See QueryIntAttribute()
+    XMLError QueryUnsignedAttribute( const char* name, unsigned int* value ) const	{
+        const XMLAttribute* a = FindAttribute( name );
+        if ( !a ) {
+            return XML_NO_ATTRIBUTE;
+        }
+        return a->QueryUnsignedValue( value );
+    }
+    /// See QueryIntAttribute()
+    XMLError QueryBoolAttribute( const char* name, bool* value ) const				{
+        const XMLAttribute* a = FindAttribute( name );
+        if ( !a ) {
+            return XML_NO_ATTRIBUTE;
+        }
+        return a->QueryBoolValue( value );
+    }
+    /// See QueryIntAttribute()
+    XMLError QueryDoubleAttribute( const char* name, double* value ) const			{
+        const XMLAttribute* a = FindAttribute( name );
+        if ( !a ) {
+            return XML_NO_ATTRIBUTE;
+        }
+        return a->QueryDoubleValue( value );
+    }
+    /// See QueryIntAttribute()
+    XMLError QueryFloatAttribute( const char* name, float* value ) const			{
+        const XMLAttribute* a = FindAttribute( name );
+        if ( !a ) {
+            return XML_NO_ATTRIBUTE;
+        }
+        return a->QueryFloatValue( value );
+    }
+
+    /// Sets the named attribute to value.
+    void SetAttribute( const char* name, const char* value )	{
+        XMLAttribute* a = FindOrCreateAttribute( name );
+        a->SetAttribute( value );
+    }
+    /// Sets the named attribute to value.
+    void SetAttribute( const char* name, int value )			{
+        XMLAttribute* a = FindOrCreateAttribute( name );
+        a->SetAttribute( value );
+    }
+    /// Sets the named attribute to value.
+    void SetAttribute( const char* name, unsigned value )		{
+        XMLAttribute* a = FindOrCreateAttribute( name );
+        a->SetAttribute( value );
+    }
+    /// Sets the named attribute to value.
+    void SetAttribute( const char* name, bool value )			{
+        XMLAttribute* a = FindOrCreateAttribute( name );
+        a->SetAttribute( value );
+    }
+    /// Sets the named attribute to value.
+    void SetAttribute( const char* name, double value )		{
+        XMLAttribute* a = FindOrCreateAttribute( name );
+        a->SetAttribute( value );
+    }
+
+    /**
+    	Delete an attribute.
+    */
+    void DeleteAttribute( const char* name );
+
+    /// Return the first attribute in the list.
+    const XMLAttribute* FirstAttribute() const {
+        return _rootAttribute;
+    }
+    /// Query a specific attribute in the list.
+    const XMLAttribute* FindAttribute( const char* name ) const;
+
+    /** Convenience function for easy access to the text inside an element. Although easy
+    	and concise, GetText() is limited compared to getting the TiXmlText child
+    	and accessing it directly.
+
+    	If the first child of 'this' is a TiXmlText, the GetText()
+    	returns the character string of the Text node, else null is returned.
+
+    	This is a convenient method for getting the text of simple contained text:
+    	@verbatim
+    	<foo>This is text</foo>
+    		const char* str = fooElement->GetText();
+    	@endverbatim
+
+    	'str' will be a pointer to "This is text".
+
+    	Note that this function can be misleading. If the element foo was created from
+    	this XML:
+    	@verbatim
+    		<foo><b>This is text</b></foo>
+    	@endverbatim
+
+    	then the value of str would be null. The first child node isn't a text node, it is
+    	another element. From this XML:
+    	@verbatim
+    		<foo>This is <b>text</b></foo>
+    	@endverbatim
+    	GetText() will return "This is ".
+    */
+    const char* GetText() const;
+
+    /**
+    	Convenience method to query the value of a child text node. This is probably best
+    	shown by example. Given you have a document is this form:
+    	@verbatim
+    		<point>
+    			<x>1</x>
+    			<y>1.4</y>
+    		</point>
+    	@endverbatim
+
+    	The QueryIntText() and similar functions provide a safe and easier way to get to the
+    	"value" of x and y.
+
+    	@verbatim
+    		int x = 0;
+    		float y = 0;	// types of x and y are contrived for example
+    		const XMLElement* xElement = pointElement->FirstChildElement( "x" );
+    		const XMLElement* yElement = pointElement->FirstChildElement( "y" );
+    		xElement->QueryIntText( &x );
+    		yElement->QueryFloatText( &y );
+    	@endverbatim
+
+    	@returns XML_SUCCESS (0) on success, XML_CAN_NOT_CONVERT_TEXT if the text cannot be converted
+    			 to the requested type, and XML_NO_TEXT_NODE if there is no child text to query.
+
+    */
+    XMLError QueryIntText( int* ival ) const;
+    /// See QueryIntText()
+    XMLError QueryUnsignedText( unsigned* uval ) const;
+    /// See QueryIntText()
+    XMLError QueryBoolText( bool* bval ) const;
+    /// See QueryIntText()
+    XMLError QueryDoubleText( double* dval ) const;
+    /// See QueryIntText()
+    XMLError QueryFloatText( float* fval ) const;
+
+    // internal:
+    enum {
+        OPEN,		// <foo>
+        CLOSED,		// <foo/>
+        CLOSING		// </foo>
+    };
+    int ClosingType() const {
+        return _closingType;
+    }
+    char* ParseDeep( char* p, StrPair* endTag );
+     XMLNode* ShallowClone( XMLDocument* document ) const;
+     bool ShallowEqual( const XMLNode* compare ) const;
+
+};
+
+
+enum Whitespace {
+    PRESERVE_WHITESPACE,
+    COLLAPSE_WHITESPACE
+};
+
+
+/** A Document binds together all the functionality.
+	It can be saved, loaded, and printed to the screen.
+	All Nodes are connected and allocated to a Document.
+	If the Document is deleted, all its Nodes are also deleted.
+*/
+class XMLDocument : public XMLNode
+{
+public:
+    /// constructor
+    XMLDocument( bool processEntities = true, Whitespace = PRESERVE_WHITESPACE );
+    ~XMLDocument();
+
+     XMLDocument* ToDocument()				{
+        return this;
+    }
+     const XMLDocument* ToDocument() const	{
+        return this;
+    }
+
+    /**
+    	Parse an XML file from a character string.
+    	Returns XML_NO_ERROR (0) on success, or
+    	an errorID.
+
+    	You may optionally pass in the 'nBytes', which is
+    	the number of bytes which will be parsed. If not
+    	specified, TinyXML will assume 'xml' points to a
+    	null terminated string.
+    */
+    XMLError Parse( const char* xml, size_t nBytes=(size_t)(-1) );
+
+    /**
+    	Load an XML file from disk.
+    	Returns XML_NO_ERROR (0) on success, or
+    	an errorID.
+    */
+    XMLError LoadFile( const char* filename );
+
+    /**
+    	Load an XML file from disk. You are responsible
+    	for providing and closing the FILE*.
+
+    	Returns XML_NO_ERROR (0) on success, or
+    	an errorID.
+    */
+    XMLError LoadFile( FILE* );
+
+    /**
+    	Save the XML file to disk.
+    	Returns XML_NO_ERROR (0) on success, or
+    	an errorID.
+    */
+    XMLError SaveFile( const char* filename, bool compact = false );
+
+    /**
+    	Save the XML file to disk. You are responsible
+    	for providing and closing the FILE*.
+
+    	Returns XML_NO_ERROR (0) on success, or
+    	an errorID.
+    */
+    XMLError SaveFile( FILE* fp, bool compact = false );
+
+    bool ProcessEntities() const		{
+        return _processEntities;
+    }
+    Whitespace WhitespaceMode() const	{
+        return _whitespace;
+    }
+
+    /**
+    	Returns true if this document has a leading Byte Order Mark of UTF8.
+    */
+    bool HasBOM() const {
+        return _writeBOM;
+    }
+    /** Sets whether to write the BOM when writing the file.
+    */
+    void SetBOM( bool useBOM ) {
+        _writeBOM = useBOM;
+    }
+
+    /** Return the root element of DOM. Equivalent to FirstChildElement().
+        To get the first node, use FirstChild().
+    */
+    XMLElement* RootElement()				{
+        return FirstChildElement();
+    }
+  
+
+    /** Print the Document. If the Printer is not provided, it will
+        print to stdout. If you provide Printer, this can print to a file:
+    	@verbatim
+    	XMLPrinter printer( fp );
+    	doc.Print( &printer );
+    	@endverbatim
+
+    	Or you can use a printer to print to memory:
+    	@verbatim
+    	XMLPrinter printer;
+    	doc->Print( &printer );
+    	// printer.CStr() has a const char* to the XML
+    	@endverbatim
+    */
+    void Print( XMLPrinter* streamer=0 );
+     bool Accept( XMLVisitor* visitor ) const;
+
+    /**
+    	Create a new Element associated with
+    	this Document. The memory for the Element
+    	is managed by the Document.
+    */
+    XMLElement* NewElement( const char* name );
+    /**
+    	Create a new Comment associated with
+    	this Document. The memory for the Comment
+    	is managed by the Document.
+    */
+    XMLComment* NewComment( const char* comment );
+    /**
+    	Create a new Text associated with
+    	this Document. The memory for the Text
+    	is managed by the Document.
+    */
+    XMLText* NewText( const char* text );
+    /**
+    	Create a new Declaration associated with
+    	this Document. The memory for the object
+    	is managed by the Document.
+
+    	If the 'text' param is null, the standard
+    	declaration is used.:
+    	@verbatim
+    		<?xml version="1.0" encoding="UTF-8"?>
+    	@endverbatim
+    */
+    XMLDeclaration* NewDeclaration( const char* text=0 );
+    /**
+    	Create a new Unknown associated with
+    	this Document. The memory forthe object
+    	is managed by the Document.
+    */
+    XMLUnknown* NewUnknown( const char* text );
+
+    /**
+    	Delete a node associated with this document.
+    	It will be unlinked from the DOM.
+    */
+    void DeleteNode( XMLNode* node )	{
+        node->_parent->DeleteChild( node );
+    }
+
+    void SetError( XMLError error, const char* str1, const char* str2 );
+
+    /// Return true if there was an error parsing the document.
+    bool Error() const {
+        return _errorID != XML_NO_ERROR;
+    }
+    /// Return the errorID.
+    XMLError  ErrorID() const {
+        return _errorID;
+    }
+    /// Return a possibly helpful diagnostic location or string.
+    const char* GetErrorStr1() const {
+        return _errorStr1;
+    }
+    /// Return a possibly helpful secondary diagnostic location or string.
+    const char* GetErrorStr2() const {
+        return _errorStr2;
+    }
+    /// If there is an error, print it to stdout.
+    void PrintError() const;
+
+    // internal
+    char* Identify( char* p, XMLNode** node );
+
+     XMLNode* ShallowClone( XMLDocument* /*document*/ ) const	{
+        return 0;
+    }
+     bool ShallowEqual( const XMLNode* /*compare*/ ) const	{
+        return false;
+    }
+};
+

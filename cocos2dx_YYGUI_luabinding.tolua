@@ -1,0 +1,211 @@
+$#include "../GUI/YYButton.h"
+$#include "../GUI/YYDataList.h"
+$#include "../GUI/YYDataListItem.h"
+$#include "../GUI/YYGraySprite.h"
+$#include "../GUI/YYList.h"
+$#include "../GUI/YYMenu.h"
+$#include "../GUI/YYPopupLayer.h"
+$#include "../GUI/YYPopupManage.h"
+$#include "../GUI/YYTextInput.h"
+$#include "../GUI/YYTextField.h"
+
+$#include "LuaCocos2d.h"
+
+$using namespace cocos2d;
+
+class YYMenu: public CCMenu
+{
+    YYMenu();
+    ~YYMenu();
+    bool isEnabled();
+    void setEnabled(bool value);
+
+    static YYMenu* create();
+    static YYMenu* createWithItem(CCMenuItem* item);
+    static YYMenu* createWithArray(CCArray* pArrayOfItems);
+    
+    
+    //设置新的优先级    可在未加到舞台的时候就设置属性
+    void setNewPriority(int newPriority);
+};
+
+
+class YYDataListItem
+    : public CCTableViewCell
+{
+    YYDataListItem();
+    ~YYDataListItem();
+
+    static YYDataListItem* create( );
+    void addChild(CCNode * child);
+
+    void addChild(CCNode * child, int zOrder);
+
+   
+    void addChild(CCNode * child, int zOrder, int tag);
+};
+
+
+class YYDataList: public CCTableView, 
+    public CCTableViewDataSource,
+    public CCTableViewDelegate
+{
+
+    YYDataList();
+    ~YYDataList();
+        //可见界面大小    单个项的大小  是否使用页面
+    static YYDataList* create( CCSize listSize,CCSize itemSize,bool usePage);
+    
+    //设置单项大小
+    void setListItemSize(int w,int h);
+    
+    //添加单项  自动reloaData()
+    void addDataItem(YYDataListItem * item);
+    //删除单项   自动reloaData()
+    void removeDataItem(YYDataListItem * item);
+    //删除  自动reloaData()
+    void removeAll();
+    
+    //设置优先级
+    void setHandlerPriority(int newPriority);
+
+    //设置是否使用页面翻页
+    void setUsePage(bool isPageList);
+
+    //跳转页面
+    void trunPage(int pageIndex);
+
+    //页面索引1开始
+    int getPageIndex();
+
+    void setScreenScale(float s);
+
+
+    //设置页面加载后的lua处理函数
+    void addEventPageLoad(LUA_FUNCTION nHandler);
+    void removeEventPageLoad(void);
+
+    //设置单项被点击的时候的处理函数
+    void addEventItemTouch(LUA_FUNCTION nHandler);
+    void removeEventItemTouch(void);
+
+     void addEventProgress(LUA_FUNCTION nHandler);
+    void removeEventProgress(void);
+};
+
+
+class YYGraySprite : public CCSprite{
+public:
+    YYGraySprite();
+    ~YYGraySprite();
+    static YYGraySprite* create(const char* pszFileName);
+    bool initWithTexture(CCTexture2D* pTexture, const CCRect& tRect);
+    void draw();
+};
+
+class YYList : public CCScrollView, public CCScrollViewDelegate
+{
+
+public:
+    YYList();
+    
+    ~YYList();
+    
+    static YYList* create(CCSize size);
+    
+    bool initWithViewSize(CCSize size, CCNode* container = NULL);
+    
+    virtual void addChild(CCNode * child);
+    
+    virtual void scrollViewDidScroll(CCScrollView* view);
+    virtual void scrollViewDidZoom(CCScrollView* view) {};
+
+    void setScreenScale(float s);
+
+ };
+
+ class YYPopupLayer : public CCLayer
+{
+    YYPopupLayer();
+    
+    ~YYPopupLayer();
+
+    static YYPopupLayer *create(void);
+    
+    //所有按钮或YYdataList添加完调用下 自动设置优先级可以不在自己设置优先级
+    void check();
+};
+
+
+class YYTextInput: public CCTextFieldTTF, public CCTextFieldDelegate, public CCTouchDelegate
+{
+    YYTextInput();
+    ~YYTextInput();
+
+    static YYTextInput* textFieldWithPlaceHolder(const char *placeholder, const char *fontName, float fontSize);
+    
+    // CCLayer
+    void onEnter();
+    void onExit();
+    
+    // 初始化光标精灵
+    void initCursorSprite(int nHeight);
+
+    //最大可输入的字符
+    void setMaxChar(int len);
+
+    int getMaxChar();
+
+    //设置密码掩码
+    void setPassWord(bool trueOrFalse);
+    bool getIsPassWord();
+
+    void setColor(const ccColor3B& color3);
+
+    //设置沉默区域大小
+    void setTouthSize(int w,int h);
+
+    CCSize getTouthSize();
+
+
+    // 判断是否点击在TextField处
+    bool isInTextField(CCTouch *pTouch);
+    // 得到TextField矩形
+    CCRect getRect();
+
+    // 打开输入法
+    void openIME();
+    // 关闭输入法
+    void closeIME();
+    
+    virtual void setString(const char *displayTx, const char* inputTx);
+
+    // CCTextFieldDelegate
+    virtual bool onTextFieldAttachWithIME(CCTextFieldTTF *pSender);
+    virtual bool onTextFieldDetachWithIME(CCTextFieldTTF * pSender);
+    virtual bool onTextFieldInsertText(CCTextFieldTTF * pSender, const char * text, int nLen);
+    virtual bool onTextFieldDeleteBackward(CCTextFieldTTF * pSender, const char * delText, int nLen);
+    
+    // CCLayer Touch
+    bool ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent);
+    void ccTouchEnded(CCTouch *pTouch, CCEvent *pEvent);
+    
+};
+
+class YYPopupManage{
+    
+    YYPopupManage();
+    
+    ~YYPopupManage();
+
+    int add();
+    int del();
+    
+    int count();
+    
+    static YYPopupManage * share(void);
+    
+};
+
+
+
