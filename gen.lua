@@ -42,6 +42,13 @@ local defaultValue = name+C(R"09")
 local symbol = S"*&~"
 local const = P("const")
 
+local functionHead =(P"virtual"+P"const")^0
+
+local datatype = name  --no super    long long used typedef int64 long long
+
+--
+local toluaGma = (P"@"*blank0*word*blank0)^0
+
 local function multipat(pat)
 	return Ct(blank0 * (pat * blanks) ^ 0 * pat^0 * blank0)
 end
@@ -62,8 +69,10 @@ local typedef = P{
 	CONST_FUN_FIELD=namedpat("cfun",name*blank0*V"PARAM_STRUCT"),
 	DCONST_FUN_FIELD=namedpat("dfun",symbol*blank0*name*blank0*V"PARAM_STRUCT"),
 	S_FUN_FIELD=namedpat("sfun",P"static"*blanks*V"FUN_FIELD"),
-	FUN_FIELD=namedpat("fun",P("virtual")^0*blanks^0*name*blank0*symbol^0*blank0*name*blank0*(P"@"*blank0*name*blank0)^0*V"PARAM_STRUCT"),
-	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blanks*defaultValue)^0*P","^0),
+	--                       函数修饰              datatype		*			funname            
+	FUN_FIELD=namedpat("fun",functionHead*blank0*datatype*blank0*symbol^0*blank0*name*blank0*toluaGma*V"PARAM_STRUCT"),
+	--                                 
+	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blank0*defaultValue)^0*P","^0),
 	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD"+P"void")*blank0*P")"*blank0*const^0*blank0*(P";"+P"{}")),
 	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"+V"DEFAULT_STRUCT"),
 }

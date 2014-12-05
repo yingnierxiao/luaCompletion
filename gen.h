@@ -1,89 +1,36 @@
 #include "gen.h"
-//--------
-enum 
-{ 
-	wxWINDOWS_OS2, 
-	wxUNIX, 
-	wxX11, 
-	wxPALMOS, 
-	wxDOS 
-}; 
 
-
-enum wxDynamicLibraryCategory
-{ 
-	wxMOTIF_X, 
-	wxWINDOWS_OS2, 
-	wxUNIX, 
-	wxX11, 
-	wxPALMOS, 
-	wxDOS 
-}; 
-
-#define kCCHTTPRequestMethodGET  0
-#define kCCHTTPRequestMethodPOST 1
-
-
-class wxlog //: public log
+class SuperAnimNodeListener
 {
 public:
-	static SuperAnimNode *create(std::string theAbsAnimFile,int theId,SuperAnimNodeListener* theListener = NULL);
-
-	wxlog(const wxString& expr, int flags = wxRE_DEFAULT );
-	~wxlog();
-
-	static wxString CanonicalizeName(const wxString* name, wxDynamicLibraryCategory cat = wxDL_LIBRARY); 
-
-	void SetLog(wxLog *logger); 
-
-	wxLog *GetOldLog(wxLog *logger) const; 
-
-	wxDynamicLibraryDetails Item( int n );
-
-	bool Load(const wxString& libname, int flags = wxDL_DEFAULT); 
-
-	bool HasSymbol(const wxString& name) const; 
-
+    virtual void OnAnimSectionEnd(int theId, std::string theLabelName){}
 };
-
-class CCCrypto : public ccc
+class SuperAnimNode : public CCSprite
 {
+
 public:
-    static LUA_STRING* encryptXXTEALua @ createWithUrl (const char* plaintext,int plaintextLength,const char* key,int keyLength);
 
+	// unsigned char   ReadUInt8();
+	// void    WriteUInt8(unsigned char u1Data);
 
-    static CCHTTPRequest* createWithUrlLua @ createWithUrl (LUA_FUNCTION listener,
-                                           const char* url,
-                                           int method = kCCHTTPRequestMethodGET,
-                                           bool isOpenssl = false);
+    SuperAnimNode();
+    ~SuperAnimNode();
+    static SuperAnimNode *create(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener=NULL);
 
-    static LUA_STRING decryptXXTEALua @ decryptXXTEA (const char* ciphertext,
-                                      int ciphertextLength,
-                                      const char* key,
-                                      int keyLength);
+    bool Init(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener);
+    void draw();
+    void update(float dt);
+    void setFlipX(bool isFlip);
+    void setFlipY(bool isFlip);
 
-    static LUA_STRING encodeBase64Lua @ encodeBase64 (const char* input, int inputLength);
-    static LUA_STRING decodeBase64Lua @ decodeBase64 (const char* input);
+    bool PlaySection(std::string theLabel);
+    float GetSectionTime(std::string theLabel);
+    void Pause();
+    void Resume();
+    bool IsPause();
+    bool IsPlaying();
+    int GetCurFrame();
+    std::string GetCurSectionName();
+    bool HasSection(std::string theLabelName);
 
-    static LUA_STRING MD5Lua @ MD5 (char* input, bool isRawOutput);
-
-    static LUA_STRING MD5FileLua @ MD5File(const char* path);
 };
-
-class wxDateTimeArray 
-{
-wxDateTimeArray( ); 
-wxDateTimeArray(const wxDateTimeArray& array ); 
-
-void Add(const wxDateTime& dateTime, size_t copies = 1 ); 
-void Alloc(size_t nCount ); 
-void Clear( ); 
-void Empty( ); 
-int GetCount() const; 
-void Insert(const wxDateTime& dt, int nIndex, size_t copies = 1 ); 
-bool IsEmpty( ); 
-wxDateTime Item(size_t nIndex) const; 
-wxDateTime Last( ); 
-void RemoveAt(size_t nIndex, size_t count = 1 ); 
-void Shrink( ); 
-}; 

@@ -113,6 +113,7 @@ public:
     bool HasSection(std::string theLabelName);
 
 };
+
 class BuffPacket
 {
 public:
@@ -121,36 +122,36 @@ public:
 
     BuffPacket();
     ~BuffPacket();
-    unsigned char   ReadUInt8();
-    unsigned short  ReadUInt16();
-    unsigned int  ReadUInt32();
-    unsigned long long  ReadUInt64();
-    signed char    ReadInt8();
+    uint8   ReadUInt8();
+    uint16  ReadUInt16();
+    uint32  ReadUInt32();
+    uint64  ReadUInt64();
+    char    ReadInt8();
     short   ReadInt16();
-    int   ReadInt32();
+    int     ReadInt32();
 
     float32 ReadFloat32();
     float64 ReadFloat64();
     string  ReadString();
     
 
-    void    WriteUInt8(unsigned char u1Data);
-    void    WriteUInt16(unsigned short u2Data);
-    void    WriteUInt32(unsigned int u4Data);
-    void    WriteUInt64(unsigned long long u8Data);
+    void    WriteUInt8(uint8 u1Data);
+    void    WriteUInt16(uint16 u2Data);
+    void    WriteUInt32(uint32 u4Data);
+    void    WriteUInt64(uint64 u8Data);
     void    WriteFloat32(float32 f4Data);
     void    WriteFloat64(float64 f8Data);
-    void    WriteString(string str);
+    void    WriteString(const string &str);
  
-    unsigned short  GetPacketID();
-    void SetPacketID(unsigned short id);
+    uint16 GetPacketID();
+    void SetPacketID(uint16 id);
     int SendData(int serverID=0);
 };
 
 class ClientNet
 {
 public:
-    bool ConnectServer(const char* ip,unsigned short port);
+    bool ConnectServer(const char* ip,uint16 port);
     bool ReconnectServer();
     bool Stop();
     
