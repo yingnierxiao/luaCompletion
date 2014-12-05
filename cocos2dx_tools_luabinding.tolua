@@ -19,6 +19,11 @@ class Loger
 
 class Utils
 {
+    /*
+    
+
+    
+     */
 	Utils(void);
 	~Utils(void);
 

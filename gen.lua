@@ -30,7 +30,13 @@ local line_comment = "//" * (1 - newline) ^0 * (newline + eof)
 local include_comment = "$" * (1 - newline) ^0 * (newline + eof)
 local include_comment2 = "#include" * (1 - newline) ^0 * (newline + eof)
 
-local blank = S" \t" + newline + line_comment + include_comment+ include_comment2
+local commentStart  = P"/*"
+local commentEnd  = P"*/"
+local comment       = commentStart * (1 - commentEnd)^0 * commentEnd
+
+
+
+local blank = S" \t" + newline + line_comment + include_comment+ include_comment2 +comment
 local blank0 = blank ^ 0
 local blanks = blank ^ 1
 local alpha = R"az" + R"AZ" + "_"+"::"
@@ -44,10 +50,19 @@ local const = P("const")
 
 local functionHead =(P"virtual"+P"const")^0
 
+
+--fun end type
+local funStart = P"{"
+local funEnd = P"}"
+local funDump = (funStart * (1 - funEnd)^0 * funEnd) + P";"
+
+
 local datatype = name  --no super    long long used typedef int64 long long
+
 
 --
 local toluaGma = (P"@"*blank0*word*blank0)^0
+
 
 local function multipat(pat)
 	return Ct(blank0 * (pat * blanks) ^ 0 * pat^0 * blank0)
@@ -57,13 +72,16 @@ local function namedpat(name, pat)
 	return Ct(Cg(Cc(name), "type") * Cg(pat))
 end
 
+local extClass = (P":"*blank0*multipat(P("public")*blanks*name*blank0*P","^0))^0+blank0
+
 
 local typedef = P{
 	"ALL",
 	DEFAULT_STRUCT=namedpat("define",(P"#define"* blanks*name*blanks*defaultValue)),
 	ENUM_FIELD=namedpat("enum_field",name*blank0*(P",")^0),
 	ENUM_STRUCT = namedpat("enum",P"enum"*blank0*P(name)^0*blank0*P"{"*blank0*multipat(V"ENUM_FIELD")*blank0*P"}"*blank0*P";"),
-	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*(P":"*blank0*P("public")*blanks*name*blank0)^0*P"{"*V("CLASS_BODY")*"}"*blank0*P";"),
+	-- 											  classname      :			  public 		exclassname
+	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*extClass*P"{"*V("CLASS_BODY")*"}"*blank0*P";"),
 	CLASS_BODY=blank0*multipat(V"PUBLIC_STRUCT"+V"FUN_FIELD"+V"S_FUN_FIELD"+V"CONST_FUN_FIELD"+V"DCONST_FUN_FIELD")*blank0,
 	PUBLIC_STRUCT=name*blank0*P":",
 	CONST_FUN_FIELD=namedpat("cfun",name*blank0*V"PARAM_STRUCT"),
@@ -72,17 +90,16 @@ local typedef = P{
 	--                       函数修饰              datatype		*			funname            
 	FUN_FIELD=namedpat("fun",functionHead*blank0*datatype*blank0*symbol^0*blank0*name*blank0*toluaGma*V"PARAM_STRUCT"),
 	--                                 
-	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blank0*defaultValue)^0*P","^0),
-	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD"+P"void")*blank0*P")"*blank0*const^0*blank0*(P";"+P"{}")),
+	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blank0*defaultValue)^0*blank0*P","^0),
+	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD"+P"void")*blank0*P")"*blank0*const^0*blank0*funDump),
 	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"+V"DEFAULT_STRUCT"),
 }
 
--- local luafile = io.open("gen.h", "r")
-local luafile = io.open("cocos2dx_ext_luabinding.tolua", "r")
-local filecontent = luafile:read("*a")
-
+local filename = "cocos2dx_tools_luabinding.tolua"
 local proto = blank0 * typedef * blank0
-local state = { file = nil, pos = 0, line = 1 }
+local state = { file = filename, pos = 0, line = 1 }
+local luafile = io.open(state.file, "r")
+local filecontent = luafile:read("*a")
 local r = lpeg.match(proto * -1 + exception , filecontent , 1, state )
 
 trace(r,"",10)

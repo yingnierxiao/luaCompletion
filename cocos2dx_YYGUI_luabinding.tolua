@@ -118,7 +118,7 @@ public:
     virtual void addChild(CCNode * child);
     
     virtual void scrollViewDidScroll(CCScrollView* view);
-    virtual void scrollViewDidZoom(CCScrollView* view) {};
+    virtual void scrollViewDidZoom(CCScrollView* view) {}
 
     void setScreenScale(float s);
 
