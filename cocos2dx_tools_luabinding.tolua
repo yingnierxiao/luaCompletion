@@ -229,7 +229,7 @@ public:
 
     	Note: if called on a XMLDocument, this will return null.
     */
-     XMLNode* ShallowClone( XMLDocument* document ) const = 0;
+     XMLNode* ShallowClone( XMLDocument* document ) const;
 
     /**
     	Test if 2 nodes are the same, but don't test children.
@@ -237,7 +237,7 @@ public:
 
     	Note: if called on a XMLDocument, this will return false.
     */
-     bool ShallowEqual( const XMLNode* compare ) const = 0;
+     bool ShallowEqual( const XMLNode* compare ) const;
 
     /** Accept a hierarchical visit of the nodes in the TinyXML DOM. Every node in the
     	XML tree will be conditionally visited and the host will be called back
@@ -261,10 +261,10 @@ public:
     	const char* xmlcstr = printer.CStr();
     	@endverbatim
     */
-     bool Accept( XMLVisitor* visitor ) const = 0;
+     bool Accept( XMLVisitor* visitor ) const;
 
     // internal
-     char* ParseDeep( char*, StrPair* );
+     // //char* ParseDeep( char*, StrPair* );
 };
 
 
@@ -289,7 +289,7 @@ public:
         return _isCData;
     }
 
-    char* ParseDeep( char*, StrPair* endTag );
+    //char* ParseDeep( char*, StrPair* endTag );
      XMLNode* ShallowClone( XMLDocument* document ) const;
      bool ShallowEqual( const XMLNode* compare ) const;
 };
@@ -305,7 +305,7 @@ public:
     
      bool Accept( XMLVisitor* visitor ) const;
 
-    char* ParseDeep( char*, StrPair* endTag );
+    //char* ParseDeep( char*, StrPair* endTag );
      XMLNode* ShallowClone( XMLDocument* document ) const;
      bool ShallowEqual( const XMLNode* compare ) const;
 
@@ -375,7 +375,7 @@ public:
     */
     XMLError QueryIntValue( int* value ) const;
     /// See QueryIntAttribute
-    XMLError QueryUnsignedValue( unsigned int* value ) const;
+    XMLError QueryUnsignedValue( int* value ) const;
     /// See QueryIntAttribute
     XMLError QueryBoolValue( bool* value ) const;
     /// See QueryIntAttribute
@@ -647,7 +647,7 @@ public:
     int ClosingType() const {
         return _closingType;
     }
-    char* ParseDeep( char* p, StrPair* endTag );
+    //char* ParseDeep( char* p, StrPair* endTag );
      XMLNode* ShallowClone( XMLDocument* document ) const;
      bool ShallowEqual( const XMLNode* compare ) const;
 

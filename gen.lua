@@ -16,6 +16,7 @@ local function count_lines(_,pos, parser_state)
 		parser_state.line = parser_state.line + 1
 		parser_state.pos = pos
 	end
+	-- print(parser_state.line)
 	return pos
 end
 
@@ -30,9 +31,9 @@ local line_comment = "//" * (1 - newline) ^0 * (newline + eof)
 local include_comment = "$" * (1 - newline) ^0 * (newline + eof)
 local include_comment2 = "#include" * (1 - newline) ^0 * (newline + eof)
 
-local commentStart  = P"/*"
-local commentEnd  = P"*/"
-local comment       = commentStart * (1 - commentEnd)^0 * commentEnd
+local commentStart  = P"/*"*newline^0
+local commentEnd  = newline^0*P"*/"
+local comment       = commentStart * ((1 - commentEnd)*newline^0)^0 * commentEnd
 
 
 
@@ -40,7 +41,7 @@ local blank = S" \t" + newline + line_comment + include_comment+ include_comment
 local blank0 = blank ^ 0
 local blanks = blank ^ 1
 local alpha = R"az" + R"AZ" + "_"+"::"
-local alnum = alpha + R"09"
+local alnum = alpha + R"09"+"-"
 local word = alpha * alnum ^ 0  --可以有0个以上数字
 local name = C(word)			--捕获单词
 local defaultValue = name+C(R"09")
@@ -48,19 +49,15 @@ local defaultValue = name+C(R"09")
 local symbol = S"*&~"
 local const = P("const")
 
-local functionHead =(P"virtual"+P"const")^0
-
 
 --fun end type
-local funStart = P"{"
-local funEnd = P"}"
-local funDump = (funStart * (1 - funEnd)^0 * funEnd) + P";"
+local funStart = P"{"*newline^0
+local funEnd = newline^0*P"}"
+local funDump = (funStart * ((1 - funEnd)*newline^0)^0 * funEnd) + P";"
 
+local functionHead =(P"virtual"+P"const")^0
 
-local datatype = name  --no super    long long used typedef int64 long long
-
-
---
+local datatype = ((P"unsigned"+P"long")*blanks)^0*name  --no super    long long used typedef int64 long long
 local toluaGma = (P"@"*blank0*word*blank0)^0
 
 
@@ -78,7 +75,7 @@ local extClass = (P":"*blank0*multipat(P("public")*blanks*name*blank0*P","^0))^0
 local typedef = P{
 	"ALL",
 	DEFAULT_STRUCT=namedpat("define",(P"#define"* blanks*name*blanks*defaultValue)),
-	ENUM_FIELD=namedpat("enum_field",name*blank0*(P",")^0),
+	ENUM_FIELD=namedpat("enum_field",name*blank0*(P"="*blank0*alnum)^0*(P",")^0),
 	ENUM_STRUCT = namedpat("enum",P"enum"*blank0*P(name)^0*blank0*P"{"*blank0*multipat(V"ENUM_FIELD")*blank0*P"}"*blank0*P";"),
 	-- 											  classname      :			  public 		exclassname
 	CLASS_STRUCT=namedpat("class",P"class"*blanks*name*blank0*extClass*P"{"*V("CLASS_BODY")*"}"*blank0*P";"),
@@ -90,19 +87,34 @@ local typedef = P{
 	--                       函数修饰              datatype		*			funname            
 	FUN_FIELD=namedpat("fun",functionHead*blank0*datatype*blank0*symbol^0*blank0*name*blank0*toluaGma*V"PARAM_STRUCT"),
 	--                                 
-	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*name*blank0*symbol^0*blank0*name*(blank0*P"="*blank0*defaultValue)^0*blank0*P","^0),
+	PARAM_FIELD=namedpat("param",blank0*const^0*blank0*datatype*blank0*symbol^0*blank0*name*(blank0*P"="*blank0*defaultValue)^0*blank0*P","^0),
 	PARAM_STRUCT=namedpat("params",P"("*blank0*multipat(V"PARAM_FIELD"+P"void")*blank0*P")"*blank0*const^0*blank0*funDump),
 	ALL = multipat(V"ENUM_STRUCT"+V"CLASS_STRUCT"+V"DEFAULT_STRUCT"),
 }
 
-local filename = "cocos2dx_tools_luabinding.tolua"
+local filename = "cocos/CCAction.pkg"
 local proto = blank0 * typedef * blank0
 local state = { file = filename, pos = 0, line = 1 }
 local luafile = io.open(state.file, "r")
 local filecontent = luafile:read("*a")
 local r = lpeg.match(proto * -1 + exception , filecontent , 1, state )
 
+
+
+
 trace(r,"",10)
+
+-----
+
+local function get_snippet( content, trigger, description )
+	local space = string.rep(" ", 4)
+	local snippet = string.format("<snippet>\n%s\n%s\n%s\n%s\n</snippet>\n",
+		space .. "<content>" .. content .. "</content>",
+		space .. "<tabTrigger>" .. trigger .. "</tabTrigger>",
+		space .. "<scope>source.lua</scope>",
+		space .. "<description>" .. description .. "</description>")
+	return snippet
+end
 
 
 
