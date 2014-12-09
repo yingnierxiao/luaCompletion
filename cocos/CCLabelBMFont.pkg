@@ -31,6 +31,6 @@ class CCLabelBMFont : public CCNode
     void setOpacityModifyRGB(bool isOpacityModifyRGB);
 
     static void purgeCachedData();
-    static CCLabelBMFont * create(const char *str, const char *fntFile, float width = kCCLabelAutomaticWidth, CCTextAlignment alignment = kCCTextAlignmentLeft, CCPoint imageOffset = CCPointMake(0, 0));
+    static CCLabelBMFont * create(const char *str, const char *fntFile, float width = kCCLabelAutomaticWidth, CCTextAlignment alignment = kCCTextAlignmentLeft, CCPoint imageOffset);
 	static CCLabelBMFont * create();
 };

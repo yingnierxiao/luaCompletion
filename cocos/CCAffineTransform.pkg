@@ -1,7 +1,7 @@
 
 class CCAffineTransform {
-    float a, b, c, d;
-    float tx, ty;
+    // float a, b, c, d;
+    // float tx, ty;
 };
 
 CCAffineTransform __CCAffineTransformMake(float a, float b, float c, float d, float tx, float ty);

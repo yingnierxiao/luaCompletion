@@ -146,9 +146,9 @@ class CCJumpTo : public CCActionInterval
 */
 class ccBezierConfig {
 	ccBezierConfig(void);
-    CCPoint endPosition;
-    CCPoint controlPoint_1;
-    CCPoint controlPoint_2;
+    // CCPoint endPosition;
+    // CCPoint controlPoint_1;
+    // CCPoint controlPoint_2;
 };
 
 class CCBezierBy : public CCActionInterval
